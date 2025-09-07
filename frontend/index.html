@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="">
+  <head>
+    <meta charset="UTF-8">
+    <link rel="icon" href="/favicon.ico">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vinyl Store</title>
+    <link rel="stylesheet" href="/src/style.css">
+  </head>
+  <body>
+    <div id="app"></div>
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>
+
+
+<!--
+[ src="/src/main.js" のようにスラッシュ / から始める書き方について ]
+
+この書き方は Vite で推奨されている。なぜなら, Vite が内部で開発用のWebサーバーを起動しているためです。
+
+1. / は「プロジェクトのルートフォルダ」を指す
+  npm run dev で開発サーバーを起動すると、Vite はそのプロジェクトのルートフォルダ（package.json がある場所）をWebサイトのルート（/）として扱います。
+  そのため、index.html から見て /src/main.js というパスは、「プロジェクトルートにある src フォルダの中の main.js」 として正しく解釈されるのです。
+
+2. ビルド時にパスは自動で変換される
+  最終的に npm run build コマンドで本番用のファイルを作成する際には、Viteがこのパスを解析し、最適化された正しいパス
+  （例: /assets/index-a1b2c3d4.js）に自動で書き換えてくれます。
+
+
+<link rel="stylesheet" href="./src/style.css"> のように相対パスで書くことも多くの場合で機能しますが、
+Viteではコンポーネントの場所などが深くなった場合でもパスの指定方法を統一できるため、アセット（JS、CSS、画像など）への
+パスは / から始める絶対パスの形式で書くことが一般的です。
+
+-->

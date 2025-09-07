@@ -1,0 +1,42 @@
+# 依存関係
+# npm install や yarn install で再生成されるため、バージョン管理に含めません。
+node_modules/
+
+# ビルド成果物
+# vite build コマンドで生成される本番用のファイルです。
+dist/
+dist-ssr/
+*.local
+
+# ログファイル
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# 環境変数ファイル
+# APIキーなどの機密情報を含む可能性があるため、管理対象から除外します。
+# .env.example のようなテンプレートファイルを別途用意するのが一般的です。
+.env
+.env.local
+.env.*.local
+.env.development
+.env.production
+
+# IDE/エディタ設定
+# 開発者個人の環境設定ファイルです。
+.vscode/
+.idea/
+.project
+.classpath
+.c9/
+*.launch
+.settings/
+*.sublime-workspace
+
+# OS固有のファイル
+.DS_Store
+Thumbs.db
+
+# Viteキャッシュ
+.vite/
