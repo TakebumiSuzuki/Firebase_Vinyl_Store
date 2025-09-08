@@ -4,18 +4,20 @@ import os
 from backend.config import configs_dic
 import firebase_admin
 from firebase_admin import credentials
+from backend.blueprints.auth.views import auth_bp
 
-def createApp():
+def create_app():
     app = Flask(__name__)
 
+    app_env = os.getenv('APP_ENV', 'development')
+    config_class = configs_dic.get(app_env) # 見つからない場合には None が返る
 
-    if os.getenv('TEST_MODE'): #これは docker-compose.test.ymlファイルで指定される
-        config_class = configs_dic['testing']
-    else:
-        config_class = configs_dic['development']
-
+    if not config_class:
+        raise ValueError( # ValuError は関数の引数や入力の型は正しいが、その値が不適切な場合に使われる、非常に具体的な例外
+            f"Invalid APP_ENV: '{app_env}'. "
+            f"Please use one of {list(configs_dic.keys())}"
+        )
     app.config.from_object(config_class)
-
 
     fb_key_path = app.config.get('FIREBASE_SERVICE_ACCOUNT_KEY_PATH')
     if fb_key_path:
@@ -42,7 +44,11 @@ def createApp():
     db.init_app(app)
     migrate.init_app(app, db)
 
+    @app.get('/')
+    def home():
+        return '<h1>こんにちは！</h1><p>これはFlaskのページです。</p>'
 
+    app.register_blueprint(auth_bp)
 
 
     return app
