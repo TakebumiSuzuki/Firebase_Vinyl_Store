@@ -1,0 +1,51 @@
+# Gitリポジトリ関連のファイル
+.git
+.gitignore
+.gitattributes
+
+# Docker関連のファイル（ビルドコンテキストには不要）
+Dockerfile
+docker-compose.yml
+.dockerignore
+
+# Node.jsの依存関係ディレクトリ（非常に重要）
+# ホストのnode_modulesはビルドコンテキストに含めず、
+# Dockerfile内で 'npm install' や 'yarn install' を実行するのがベストプラクティスです。
+node_modules/
+
+# npmやyarnのデバッグログ
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# ビルド成果物
+# コンテナ内で 'npm run build' を実行して生成するため、ホスト側のビルド済みディレクトリは不要です。
+dist/
+.output/
+
+# IDEやエディタの設定ファイル
+.idea/
+.vscode/
+*.sublime-project
+*.sublime-workspace
+
+# OS固有のファイル
+.DS_Store
+Thumbs.db
+
+# ローカル環境変数ファイル (★FirebaseのAPIキーなど機密情報を含む★)
+# APIキーやその他の機密情報は、絶対にイメージに含めないでください。
+# これらはビルド時引数（ARG）や実行時環境変数（ENV）で渡すべきです。
+.env
+.env.local
+.env.*.local
+
+# リンターやテスト関連のキャッシュ、レポート
+.eslintcache
+.stylelintcache
+coverage/
+.nyc_output/
+jest.config.js
+
+# ドキュメントなど、アプリケーションの実行に不要なファイル
+README.md

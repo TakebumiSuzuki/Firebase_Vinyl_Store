@@ -14,6 +14,8 @@ services:
       # ボリュームにコピーする。そして、それをコンテナの /frontend/node_modules にマウントする。
       # 一度データがコピーされた後は、frontend_node_modulesボリュームが、コンテナ内の
       # /frontend/node_modulesの場所を「覆いかぶさる」状態になる。
+      # 結局最初に名前付きボリュームにコピーされた node_module 固定となる。更新が必要なときには
+      # docker-compose exec frontend npm installを行う
       - frontend_node_modules:/frontend/node_modules
     depends_on:
       - backend
