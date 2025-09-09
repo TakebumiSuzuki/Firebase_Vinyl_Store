@@ -12,11 +12,14 @@ COPY --chown=node:node package.json package-lock.json ./
 # 3. 依存関係をインストールする（rootユーザーのまま）。cはクリーンインストール
 RUN npm ci
 
-# npm ci で root が作成した node_modules ディレクトリの所有権を、
-# これからプロセスを実行する 'node' ユーザーに渡す。-Rは recursive
+# npm ci で root が作成した node_modules ディレクトリの所有権を、これからプロセスを実行する
+# 'node' ユーザーに渡す。-Rは recursive。
 RUN chown -R node:node /frontend/node_modules
 
 # 4. ソースコード全体をコピーし、所有者を'node'ユーザーに変更する
+# ただし、.dockerignoreファイルにnode_modules/が記述されていないと、前段のRUN npm ciで
+# コンテナ内にインストールしたnode_modulesディレクトリを、ホストマシン
+# （Dockerfileを実行している環境）のファイルで上書きしてしまうので注意
 COPY --chown=node:node . .
 
 # 5. すべての準備が終わった後、最後に非特権ユーザーに切り替える
@@ -27,4 +30,5 @@ EXPOSE 5173
 
 # 7. アプリケーションを起動（このコマンドは'node'ユーザーで実行される）
 # localhostだけでなく、コンテナ外部からのアクセスを受け付けるために--hostが必要
+# 開発時の柔軟性を確保するために、ENTRYPOINTとはせず、CMDにする。
 CMD ["npm", "run", "dev", "--", "--host", "0.0.0.0"]

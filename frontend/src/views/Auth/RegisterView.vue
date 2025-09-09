@@ -4,10 +4,12 @@ import { auth } from '@/firebase'
 import { createUserWithEmailAndPassword } from 'firebase/auth'
 import { useNotificationStore } from '@/stores/notificationStore'
 import LoaderIcon from '@/assets/icons/Loader.svg'
+import axios from 'axios'
 
 const { showNotification } = useNotificationStore()
 
 const formDict = reactive({
+  userName: '',
   email: '',
   password: '',
   confirmation: '',
@@ -25,20 +27,35 @@ function quickValidate(){
 }
 
 const handleSubmit = async()=>{
-
   isLoading.value = true
 
   await new Promise((resolve) =>{
     setTimeout(resolve, 2000)
   })
-
+  let userCredential;
   try{
     // validation
     if (!quickValidate()){return}
     console.log(formDict)
-    const userCredential = await createUserWithEmailAndPassword(auth, formDict.email, formDict.password)
+    userCredential = await createUserWithEmailAndPassword(auth, formDict.email, formDict.password)
+    // userCredential.userと、onAuthStateChangedで渡される user は同じ。
     showNotification('User registration have successfully done!', 'success')
-    console.log('登録成功:', userCredential.user);
+    console.log('FIREBASE AUTH登録成功:', userCredential.user);
+
+    try{
+      const user = userCredential.user
+      const idToken = await user.getIdToken()
+      const payload = { uid: user.uid, email: user.email, displayName: formDict.userName }
+      const response = await axios.post(
+        '/api/v1/auth/add-userporfile',
+        payload,
+        {headers: {Authorization: `Bearer ${idToken}`}},
+      )
+      console.log('USERPROFILE登録成功:', response.data);
+    }catch(error){
+      console.error('登録エラー:', error.message);
+    }
+
   }catch(error){
     console.error('登録エラー:', error.message);
   }finally{

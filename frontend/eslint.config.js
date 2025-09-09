@@ -8,13 +8,14 @@ import pluginVue from 'eslint-plugin-vue'
 
 export default defineConfig([
 
-  // 対象ファイルの指定
+  // 対象ファイルの指定、、だが意味をなしていないので消しても良いとのこと
   {
-    name: 'app/files-to-lint', //この設定ブロックに名前。必須ではない
+    //この設定ブロックに名前。必須ではない。デバッグ時などにどの設定が適用されているかを確認しやすくする目的
+    name: 'app/files-to-lint',
     files: ['**/*.{js,mjs,jsx,vue}'], //どのファイルをESLintの対象にするか
   },
 
-  //  チェックから除外するファイルの指定
+  //  チェックから除外するファイルの指定。このglobalIgnores([...]) は、設定ファイル全体に適用される
   globalIgnores(['**/dist/**', '**/dist-ssr/**', '**/coverage/**']),
 
   // 実行環境の指定
@@ -26,11 +27,12 @@ export default defineConfig([
     },
   },
 
-  js.configs.recommended, // @eslint/jsが提供する推奨ルールセットを適用
+  // @eslint/jsが提供する推奨ルールセットを適用。AirBnBを使ってもいいが、そちらはより厳しい。
+  js.configs.recommended,
 
   // eslint-plugin-vue が提供する Vue.js 用のルールセットを適用。この設定セットの内部で、
   // .vueファイルを解析するために必要な vue-eslint-parser が自動的に設定されています。
-  // eslint-plugin-vue をインストールすると、eslint-plugin-vue も自動でインストールされる
+  // eslint-plugin-vue をインストールすると、vue-eslint-parser も自動でインストールされる
   ...pluginVue.configs['flat/essential'],
 
 ])

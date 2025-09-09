@@ -1,14 +1,13 @@
 #!/bin/bash
 
-# このファイル自体は、開発環境で使えるようにするため、chmod +x entrypoint.sh をする必要がある。
-# これは volume によってコンテナ内のファイルを上書き（マスク）するため。
-# また本番環境では、イメージの中に焼き付けられた entrypoint.sh が使われる(volumeは使わない)
-# ので、Dockerfileの中の RUN chmod +x entrypoint.sh は必要。
+# このファイル自体に、開発環境で使えるようにするため、chmod +x entrypoint.sh を実行する必要がある。
+# (これは volume によってコンテナ内のファイルを上書き（マスク）するため。)
+# また本番環境では、イメージの中に焼き付けられた entrypoint.sh が使われる(volumeは使わない)ので、
+# Dockerfileの中の RUN chmod +x entrypoint.sh の記述は必要。
 
 # スクリプト内で実行したコマンドが一つでも失敗（エラーで終了）した場合、その場でスクリプト全体を即座に終了させる
 set -e
 
-# FLASK_DEBUGが'1'に設定されているかどうかでコマンドを切り替える
 if [ "${APP_ENV}" = "development" ]; then
     # 開発モード
     echo "Starting development server with Flask (FLASK_DEBUG=1)..."

@@ -48,20 +48,3 @@ USER appuser
 # ENTRYPOINTでスクリプトを指定
 ENTRYPOINT ["./entrypoint.sh"]
 
-
-
-
-
-# 以下の行はイメージを作る時には実行されない。コンテナをインスタンス化する時に、ボリュームのマウントが完了してから実行される
-# --host=0.0.0.0 により、コンテナ内部（127.0.0.1）からのアクセスも含め全ての宛先からの通信を受ける
-# USER appuserにより、このコマンドは 'appuser' 権限で実行されます
-# CMD [ "flask", "run", "--host=0.0.0.0" ]
-
-
-# ENV GUNICORN_WORKERS=4
-# ENV GUNICORN_THREADS=2
-# # デバッグ用: ワーカー数を1に減らして詳細ログを出力
-# ENV FLASK_APP=app:create_app()
-# # 別の書き方
-# CMD ["gunicorn", "--bind", "0.0.0.0:5000", "--workers", "1", "--timeout", "120", "app:create_app()"]
-
