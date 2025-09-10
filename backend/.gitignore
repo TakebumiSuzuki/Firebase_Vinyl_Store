@@ -27,6 +27,7 @@ instance/
 # 環境変数ファイル
 # データベース接続情報やSECRET_KEYなどの機密情報を含みます。
 .env
+.env.*
 .flaskenv
 
 # IDE/エディタ設定

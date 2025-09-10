@@ -9,8 +9,8 @@ export const useAuthStore = defineStore('authStore', ()=>{
   })
   const isAdmin = ref(null)
 
-  function setUser(user){
-    user.value = user
+  function setUser(newUser){
+    user.value = newUser
   }
 
   return {

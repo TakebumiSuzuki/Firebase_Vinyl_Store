@@ -1,0 +1,39 @@
+services:
+  backend-test:
+    build: ./backend
+    entrypoint: "" # DockerfileのENTRYPOINTを明示的に無効化
+    # テストを実行するコマンドに変更
+    command: sh -c "pip install -r requirements-dev.txt && python -m pytest tests"
+    volumes:
+      - ./backend:/backend
+    # テスト用の環境変数ファイルを指定
+    env_file:
+      - ./backend/.env.test
+    # テスト用DBの準備ができてから起動
+    depends_on:
+      db-test:
+        condition: service_healthy
+
+  db-test:
+    image: postgres:17.5-alpine3.20
+    
+    # テストではデータを永続化しないため、volumesは削除します
+    # これにより、コンテナを再作成するたびにクリーンなDBが用意されます
+
+    env_file:
+      - ./backend/.env.test
+
+    # (任意) デバッグ用にホストPCからテストDBに接続したい場合
+    # 開発用DB(5433)とポートが衝突しないように5434などに変更
+    ports:
+      - "5434:5432"
+
+    healthcheck:
+      # .env.test ファイル内の変数を使ってヘルスチェックを実行
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-testuser} -d ${POSTGRES_DB:-testdb}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+# テストでは名前付きボリュームは使用しないため、トップレベルのvolumesは不要です

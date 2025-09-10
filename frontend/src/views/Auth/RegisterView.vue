@@ -45,19 +45,19 @@ const handleSubmit = async()=>{
     try{
       const user = userCredential.user
       const idToken = await user.getIdToken()
-      const payload = { uid: user.uid, email: user.email, displayName: formDict.userName }
+      const payload = { uid: user.uid, user_name: formDict.userName }
       const response = await axios.post(
-        '/api/v1/auth/add-userporfile',
+        '/api/v1/auth/add-user-profile',
         payload,
         {headers: {Authorization: `Bearer ${idToken}`}},
       )
       console.log('USERPROFILE登録成功:', response.data);
     }catch(error){
-      console.error('登録エラー:', error.message);
+      console.error('登録エラー:', error);
     }
 
   }catch(error){
-    console.error('登録エラー:', error.message);
+    console.error('登録エラー:', error);
   }finally{
     isLoading.value = false
   }
@@ -72,6 +72,11 @@ const handleSubmit = async()=>{
 
     <div class="py-4 ">
       <form @submit.prevent="handleSubmit" novalidate>
+
+        <div class="mb-6">
+          <label for="user-name" class="block mb-1 font-medium">User Name:</label>
+          <input id="user-name" type="text" class="input-layout" v-model.trim="formDict.userName">
+        </div>
 
         <div class="mb-6">
           <label for="email" class="block mb-1 font-medium">Email:</label>

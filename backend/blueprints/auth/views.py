@@ -1,42 +1,57 @@
-from flask import Blueprint, request, jsonify, g
-from firebase_admin.auth import verify_id_token
+from flask import Blueprint, request, jsonify, g, current_app
+from firebase_admin import auth
 from backend.models.user_profile import UserProfile
 from backend.extensions import db
 from backend.decorators import payload_required, login_required
+from sqlalchemy.exc import SQLAlchemyError
+from backend.errors import error_response
 
 auth_bp = Blueprint('auth', __name__, url_prefix='/api/v1/auth')
 
-@auth_bp.get('/login')
-def login():
-    return 'helloooo'
+# @auth_bp.get('/login')
+# def login():
+#     return 'helloooo'
 
-@auth_bp.post('/add-userporfile')
+def delete_fb_user(uid):
+  try:
+    auth.delete_user(uid)
+  except Exception as e:
+    current_app.logger.critical(f'Data descrepancy occured. Failed to delete FB user. uid: {uid}')
+
+
+@auth_bp.post('/add-user-profile')
 @payload_required
 @login_required
-def add_userprofile():
+def add_user_profile():
     payload = g.payload
     decoded_token = g.decoded_token
-
-    email = payload.get('email').trim()
-    if not email:
-        return jsonify({'msg':'email is empty'}), 400
-    user_name = payload.get('user_name').trim()
-    if not user_name:
-        return jsonify({'msg':'user_name is empty'}), 400
-
-    if email == 'admin@gmail.com':
-        is_admin = True
-    else:
-        is_admin = False
-
     uid = decoded_token['uid']
+
+    email = decoded_token.get('email')
+    if not email:
+        delete_fb_user(uid)
+        return error_response(code='BAD_REQUEST', message='email is empty', status=400)
+    user_name = payload.get('user_name')
+    if not user_name:
+        delete_fb_user(uid)
+        return error_response(code='BAD_REQUEST', message='user_name is empty', status=400)
+
+    is_admin = False
 
     new_user = UserProfile(email=email, user_name=user_name, is_admin=is_admin, uid=uid)
     try:
         db.session.add(new_user)
         db.session.commit()
-    except:
-        pass
+        return jsonify({'msg': 'Successfully saved user data.' }), 200
+    except SQLAlchemyError as e:
+        try:
+            db.session.rollback()
+            delete_fb_user(uid)
+            current_app.logger.error('Failed to save Userprofile. Delet FB user info to correnpond.')
+            return error_response(code='INTERNAL_SERVER_ERROR', message='Failed to save User. Please try again later.', status=500)
+        except Exception as e:
+            return error_response(code='INTERNAL_SERVER_ERROR', message='Failed to save User. Please try again later.', status=500)
+
 
 """
 {
@@ -50,6 +65,7 @@ def add_userprofile():
 
   // --- 2. Firebase固有のユーザー情報 ---
   "uid": "AbcDefg1234567890hijklmn", // ★★★ 最も重要なユーザーID
+  "user_id": "AbcDefg1234567890hijklmn", // 開発者の利便性や過去のSDKとの互換性のためにこれも含まれる
   "name": "Taro Yamada",
   "picture": "https://lh3.googleusercontent.com/a/....",
   "email": "taro.yamada@example.com",

@@ -17,12 +17,12 @@ const pinia = createPinia()
 app.use(pinia)
 const authStore = useAuthStore()
 
-
 let appMounted = false
 
 onAuthStateChanged(auth, (user)=>{
+
   authStore.setUser(user)
-  
+
   if (!appMounted){
     app.use(router)
     app.mount('#app')
