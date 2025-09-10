@@ -5,9 +5,10 @@ export const useAuthStore = defineStore('authStore', ()=>{
 
   const user = ref(null)
   const isLoggedIn = computed(()=>{
-    return Boolean(user)
+    return Boolean(user.value)
   })
   const isAdmin = ref(null)
+  const userName = ref(null)
 
   function setUser(newUser){
     user.value = newUser
@@ -17,6 +18,7 @@ export const useAuthStore = defineStore('authStore', ()=>{
     user,
     isLoggedIn,
     isAdmin,
+    userName,
     setUser,
   }
 

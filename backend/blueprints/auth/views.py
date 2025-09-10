@@ -5,6 +5,7 @@ from backend.extensions import db
 from backend.decorators import payload_required, login_required
 from sqlalchemy.exc import SQLAlchemyError
 from backend.errors import error_response
+from backend.schemas.user_profile import PublicReadUserProfile
 
 auth_bp = Blueprint('auth', __name__, url_prefix='/api/v1/auth')
 
@@ -37,12 +38,13 @@ def add_user_profile():
         return error_response(code='BAD_REQUEST', message='user_name is empty', status=400)
 
     is_admin = False
-
     new_user = UserProfile(email=email, user_name=user_name, is_admin=is_admin, uid=uid)
     try:
         db.session.add(new_user)
         db.session.commit()
-        return jsonify({'msg': 'Successfully saved user data.' }), 200
+        data = PublicReadUserProfile.model_validate(new_user).model_dump()
+        current_app.logger.info(data)
+        return jsonify({'user_profile': data }), 201
     except SQLAlchemyError as e:
         try:
             db.session.rollback()
@@ -50,6 +52,7 @@ def add_user_profile():
             current_app.logger.error('Failed to save Userprofile. Delet FB user info to correnpond.')
             return error_response(code='INTERNAL_SERVER_ERROR', message='Failed to save User. Please try again later.', status=500)
         except Exception as e:
+            current_app.logger.critical(f'Database data discrepancy has occured.Faild to delete Firebase user account. uid: {uid}')
             return error_response(code='INTERNAL_SERVER_ERROR', message='Failed to save User. Please try again later.', status=500)
 
 

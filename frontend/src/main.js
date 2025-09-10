@@ -20,7 +20,7 @@ const authStore = useAuthStore()
 let appMounted = false
 
 onAuthStateChanged(auth, (user)=>{
-
+  console.log(`onAuthStateChange is called. user: ${user}`)
   authStore.setUser(user)
 
   if (!appMounted){
@@ -49,4 +49,19 @@ JavaScript エンジンはモジュールを次のステップで処理します
 .vueファイルについては、インポートされたときに、JS モジュールに変換されるが、setup() の中身はまだ実行されない。
 実際に setup() が呼ばれるのは、Vue がそのコンポーネントをマウント（画面に描画）するとき。
 
+*/
+
+/*
+userの中身(UserCredential.userも同じ)
+  uid	string	ユーザーに割り当てられた一意のID。
+  email	string | null	ユーザーのメールアドレス。
+  emailVerified	boolean	メールアドレスが確認済みかどうか。
+  displayName	string | null	ユーザーの表示名。
+  photoURL	string | null	プロフィール写真のURL。
+  phoneNumber	string | null	ユーザーの電話番号。
+  isAnonymous	boolean	匿名ユーザーであるかどうか。
+  providerData	Array<UserInfo>	ユーザーにリンクされている認証プロバイダの情報（providerId, uid など）の配列。
+  metadata	UserMetadata	アカウントの作成日時 (creationTime) や最終サインイン日時 (lastSignInTime) などのメタデータ。
+  getIdToken()	function	Firebaseサービスと通信するためのIDトークンを返す非同期関数。
+  delete()	function	ユーザーアカウントを削除する非同期関数。
 */

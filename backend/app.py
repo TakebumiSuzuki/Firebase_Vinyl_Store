@@ -5,9 +5,15 @@ from backend.config import configs_dic
 import firebase_admin
 from firebase_admin import credentials
 from backend.blueprints.auth.views import auth_bp
+from backend.blueprints.me.views import me_bp
+import logging
 
 def create_app():
     app = Flask(__name__)
+
+    # INFOレベル以上のログをコンソールに出力する設定
+    logging.basicConfig(level=logging.INFO)
+    app.logger.setLevel(logging.INFO)
 
     app_env = os.getenv('APP_ENV', 'development')
     config_class = configs_dic.get(app_env) # 見つからない場合には None が返る
@@ -49,6 +55,7 @@ def create_app():
         return '<h1>こんにちは！</h1><p>これはFlaskのページです。</p>'
 
     app.register_blueprint(auth_bp)
+    app.register_blueprint(me_bp)
 
 
     return app

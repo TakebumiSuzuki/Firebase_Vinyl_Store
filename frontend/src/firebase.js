@@ -25,7 +25,7 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 // この時点では、auth.currentUser は null です。
-console.log('直後のcurrentUser',auth.currentUser); // null
+console.log('FB authがイニシャライズされた直後のcurrentUser',auth.currentUser); // null
 
 export { auth }
 

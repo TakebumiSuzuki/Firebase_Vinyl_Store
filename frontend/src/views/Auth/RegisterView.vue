@@ -5,8 +5,11 @@ import { createUserWithEmailAndPassword } from 'firebase/auth'
 import { useNotificationStore } from '@/stores/notificationStore'
 import LoaderIcon from '@/assets/icons/Loader.svg'
 import axios from 'axios'
+import { useAuthStore } from '@/stores/authStore'
+import { getErrorMessage } from '@/utils'
 
 const { showNotification } = useNotificationStore()
+const authStore = useAuthStore()
 
 const formDict = reactive({
   userName: '',
@@ -36,28 +39,35 @@ const handleSubmit = async()=>{
   try{
     // validation
     if (!quickValidate()){return}
-    console.log(formDict)
     userCredential = await createUserWithEmailAndPassword(auth, formDict.email, formDict.password)
     // userCredential.userと、onAuthStateChangedで渡される user は同じ。
-    showNotification('User registration have successfully done!', 'success')
-    console.log('FIREBASE AUTH登録成功:', userCredential.user);
+
+    console.log('Successfully user account has been created in Firebase Authentication:', userCredential.user);
 
     try{
       const user = userCredential.user
       const idToken = await user.getIdToken()
       const payload = { uid: user.uid, user_name: formDict.userName }
-      const response = await axios.post(
+      const { data: {user_profile: user_profile} } = await axios.post(
         '/api/v1/auth/add-user-profile',
         payload,
         {headers: {Authorization: `Bearer ${idToken}`}},
       )
-      console.log('USERPROFILE登録成功:', response.data);
+      authStore.isAdmin = user_profile.is_admin
+      authStore.userName = user_profile.user_name
+
+      showNotification('User registration have successfully done!', 'success')
+      console.log('Successfully logged in:', user_profile);
+
     }catch(error){
-      console.error('登録エラー:', error);
+      console.error('Failed to fetch user_profile from flask server:');
+      throw error
     }
 
-  }catch(error){
-    console.error('登録エラー:', error);
+  }catch (error) {
+    const message = getErrorMessage(error);
+    console.error(message);
+
   }finally{
     isLoading.value = false
   }
@@ -95,11 +105,11 @@ const handleSubmit = async()=>{
 
         <div class="mb-6">
           <button type="submit"
-            class="button-layout-violet flex items-center justify-center"
+            class="button-layout-violet flex items-center justify-center gap-4"
             :class="{'!cursor-not-allowed': isLoading, 'opacity-50': isLoading}"
             :disabled="isLoading"
           >
-            <LoaderIcon v-if="isLoading" class="animate-spin size-5 gap-4" />
+            <LoaderIcon v-if="isLoading" class="animate-spin size-5" />
             Create Account
           </button>
         </div>

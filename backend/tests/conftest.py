@@ -46,9 +46,7 @@ def db_session(db):
     # --- ここから後片付け ---
     db.session.remove()
     for table in reversed(db.metadata.sorted_tables):
-        # ↓↓↓ この一行を修正 ↓↓↓
         db.session.execute(table.delete())
-        # ↑↑↑ この一行を修正 ↑↑↑
     db.session.commit()
 
 @pytest.fixture
@@ -56,10 +54,8 @@ def mock_firebase_auth(mocker):
     """
     [部品⑤] Firebase Admin SDKのauthモジュールをモックに差し替えます。
     """
-    # --- ↓↓↓ このパスを、デコレータのファイルから見たパスに変更します ↓↓↓ ---
     # @login_required が decorators.py にあると仮定した場合のパス
     mock_verify = mocker.patch('backend.decorators.verify_id_token')
-    # --- ↑↑↑ このパスを、デコレータのファイルから見たパスに変更します ↑↑↑ ---
 
     # delete_userのモックは、views.pyから見たパスに合わせる
     mock_delete = mocker.patch('backend.blueprints.auth.views.delete_user')

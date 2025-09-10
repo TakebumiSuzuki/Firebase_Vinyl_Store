@@ -33,5 +33,6 @@ class PublicReadUserProfile(BaseModel):
     email: EmailStr
     birthday: date|None
     favorite_color: FavoriteColor|None
+    is_admin: bool
 
     model_config = ConfigDict(from_attributes=True)

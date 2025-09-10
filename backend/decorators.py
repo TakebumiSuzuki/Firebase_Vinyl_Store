@@ -19,13 +19,14 @@ def payload_required(f):
 
     @functools.wraps(f)
     def wrapper(*args, **kwargs):
+        current_app.logger.info('PAYLOAD1')
         try:
             payload = request.get_json()
 
         # Content-Type が application/json でない場合や、JSONの構文が間違っている場合
         except BadRequest as e:
             return jsonify({'msg':'Request body must be valid JSON with Content-Type: application/json'}), 400
-
+        current_app.logger.info('PAYLOAD2')
         # リクエストボディが完全に空の場合、または、中身が空のJSONオブジェクト {} や空の配列 [] の場合
         if not payload:
             return jsonify({'msg':'Payload cannot be empty'}), 400
@@ -51,15 +52,17 @@ def login_required(f):
 
     @functools.wraps(f)
     def wrapper(*args, **kwargs):
+        current_app.logger.info('LOGIN')
+
         auth_header = request.headers.get('Authorization')
         if not auth_header:
             return jsonify({'message': 'Authorization header is missing'}), 401
-
+        current_app.logger.info('LOGIN')
         header_parts = auth_header.split()
         if len(header_parts) != 2 or not header_parts[0].lower() == 'bearer':
             return jsonify({'message': 'Invalid Authorization header format'}), 401
         id_token = header_parts[1]
-
+        current_app.logger.info('LOGIN')
         try:
             decoded_token = verify_id_token(id_token, check_revoked=True)
         except ExpiredIdTokenError as e:

@@ -4,8 +4,12 @@ import { auth } from '@/firebase'
 import { signInWithEmailAndPassword } from 'firebase/auth'
 import { useNotificationStore } from '@/stores/notificationStore'
 import LoaderIcon from '@/assets/icons/Loader.svg'
+import axios from 'axios'
+import { useAuthStore } from '@/stores/authStore'
+import { getErrorMessage } from '@/utils'
 
 const { showNotification } = useNotificationStore()
+const authStore = useAuthStore()
 
 const formDict = reactive({
   email: '',
@@ -33,10 +37,27 @@ const handleSubmit = async()=>{
     if (!quickValidate()){return}
     console.log(formDict)
     const userCredential = await signInWithEmailAndPassword(auth, formDict.email, formDict.password)
+
+    console.log(userCredential.user.uid)
+    const idToken = await userCredential.user.getIdToken();
+    const config = {
+      headers: {
+        Authorization: `Bearer ${idToken}`
+      }
+    };
+
+    const { data: { user_profile : user_profile } } = await axios.get('/api/v1/me', config)
+    authStore.userName = user_profile.user_name
+    authStore.isAdmin =  user_profile.is_admin
+
     showNotification('You have logged in successfully!', 'success')
-    console.log('登録成功:', userCredential.user);
-  }catch(error){
-    console.error('登録エラー:', error.message);
+    console.log('Signed In Successfully :', userCredential.user);
+
+  } catch(error) {
+    const message = getErrorMessage(error);
+    console.error(message);
+    await auth.signOut()
+
   }finally{
     isLoading.value = false
   }
@@ -64,11 +85,11 @@ const handleSubmit = async()=>{
 
         <div class="mb-6">
           <button type="submit"
-            class="button-layout-violet flex items-center justify-center"
+            class="button-layout-violet flex items-center justify-center gap-4"
             :class="{'!cursor-not-allowed': isLoading, 'opacity-50': isLoading}"
             :disabled="isLoading"
           >
-            <LoaderIcon v-if="isLoading" class="animate-spin size-5 gap-4" />
+            <LoaderIcon v-if="isLoading" class="animate-spin size-5" />
             Login
           </button>
         </div>
