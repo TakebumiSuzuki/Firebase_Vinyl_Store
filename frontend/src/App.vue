@@ -9,7 +9,7 @@
   <AppConfirmation />
   <AppNotification />
 
-  <div class="flex flex-col min-h-screen text-neutral-50 dark:text-neutral-600">
+  <div class="flex flex-col min-h-screen dark:text-neutral-50 text-neutral-600">
     <TheHeader />
     <RouterView class="grow h-[1px]" />
     <TheFooter />

@@ -17,3 +17,4 @@ def get_me():
         return error_response('USER_NOT_FOUND', 'Could not get user', 404)
     data = PublicReadUserProfile.model_validate(user_profile).model_dump()
     return jsonify({ 'user_profile': data }), 200
+

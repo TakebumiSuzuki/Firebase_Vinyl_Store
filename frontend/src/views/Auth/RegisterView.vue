@@ -7,9 +7,11 @@ import LoaderIcon from '@/assets/icons/Loader.svg'
 import axios from 'axios'
 import { useAuthStore } from '@/stores/authStore'
 import { getErrorMessage } from '@/utils'
+import { useRouter } from 'vue-router'
 
 const { showNotification } = useNotificationStore()
 const authStore = useAuthStore()
+const router = useRouter()
 
 const formDict = reactive({
   userName: '',
@@ -58,6 +60,7 @@ const handleSubmit = async()=>{
 
       showNotification('User registration have successfully done!', 'success')
       console.log('Successfully logged in:', user_profile);
+      router.push({name:'home'})
 
     }catch(error){
       console.error('Failed to fetch user_profile from flask server:');
@@ -66,6 +69,7 @@ const handleSubmit = async()=>{
 
   }catch (error) {
     const message = getErrorMessage(error);
+    console.log(error)
     console.error(message);
 
   }finally{

@@ -5,6 +5,7 @@ from backend.config import configs_dic
 import firebase_admin
 from firebase_admin import credentials
 from backend.blueprints.auth.views import auth_bp
+from backend.blueprints.admin_user.views import admin_user_bp
 from backend.blueprints.me.views import me_bp
 import logging
 
@@ -56,6 +57,7 @@ def create_app():
 
     app.register_blueprint(auth_bp)
     app.register_blueprint(me_bp)
+    app.register_blueprint(admin_user_bp)
 
 
     return app

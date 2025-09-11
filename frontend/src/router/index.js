@@ -5,6 +5,7 @@ import AdminLayout from '@/layouts/AdminLayout.vue'
 import LoginView from '@/views/Auth/LoginView.vue'
 import RegisterView from '@/views/Auth/RegisterView.vue'
 import AdminUsersView from '@/views/Admin/AdminUsersView.vue'
+import HomeView from '@/views/HomeView.vue'
 
 
 // index.jsというファイル名について、Vite や Webpack などのフロントエンドの開発ツールでは、慣例的に、
@@ -13,6 +14,11 @@ import AdminUsersView from '@/views/Admin/AdminUsersView.vue'
 // まとめてexportする「窓口」として index.js が使われる
 
 const routes = [
+  {
+    path:'/home',
+    name: 'home',
+    component: HomeView,
+  },
 
   {
     path: '/auth',

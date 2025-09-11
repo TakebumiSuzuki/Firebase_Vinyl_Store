@@ -9,10 +9,6 @@ from backend.schemas.user_profile import PublicReadUserProfile
 
 auth_bp = Blueprint('auth', __name__, url_prefix='/api/v1/auth')
 
-# @auth_bp.get('/login')
-# def login():
-#     return 'helloooo'
-
 def delete_fb_user(uid):
   try:
     auth.delete_user(uid)

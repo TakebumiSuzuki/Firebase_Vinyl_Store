@@ -2,6 +2,7 @@ import functools
 from flask import request, g, jsonify, current_app
 from werkzeug.exceptions import BadRequest
 from firebase_admin.auth import verify_id_token, ExpiredIdTokenError, InvalidIdTokenError, RevokedIdTokenError
+from backend.errors import error_response
 
 def payload_required(f):
     """Requires a non-empty JSON payload in the request.
@@ -19,17 +20,17 @@ def payload_required(f):
 
     @functools.wraps(f)
     def wrapper(*args, **kwargs):
-        current_app.logger.info('PAYLOAD1')
         try:
             payload = request.get_json()
 
         # Content-Type が application/json でない場合や、JSONの構文が間違っている場合
         except BadRequest as e:
-            return jsonify({'msg':'Request body must be valid JSON with Content-Type: application/json'}), 400
-        current_app.logger.info('PAYLOAD2')
+            return error_response(code='INVALID_PAYLOAD', message='Request body must be valid JSON with Content-Type: application/json',status=400)
+
         # リクエストボディが完全に空の場合、または、中身が空のJSONオブジェクト {} や空の配列 [] の場合
         if not payload:
-            return jsonify({'msg':'Payload cannot be empty'}), 400
+            return error_response(
+                code='EMPTY_PAYLOAD',message='Payload cannot be empty', status=400)
 
         g.payload = payload
         return f(*args, **kwargs)
@@ -52,28 +53,51 @@ def login_required(f):
 
     @functools.wraps(f)
     def wrapper(*args, **kwargs):
-        current_app.logger.info('LOGIN')
-
         auth_header = request.headers.get('Authorization')
         if not auth_header:
-            return jsonify({'message': 'Authorization header is missing'}), 401
-        current_app.logger.info('LOGIN')
+            return error_response(
+                code='AUTH_HEADER_MISSING',
+                message='Authorization header is missing',
+                status=401
+            )
         header_parts = auth_header.split()
         if len(header_parts) != 2 or not header_parts[0].lower() == 'bearer':
-            return jsonify({'message': 'Invalid Authorization header format'}), 401
+            return error_response(
+                code='INVALID_AUTH_HEADER_FORMAT',
+                message='Invalid Authorization header format',
+                status=401
+            )
         id_token = header_parts[1]
-        current_app.logger.info('LOGIN')
+
         try:
             decoded_token = verify_id_token(id_token, check_revoked=True)
-        except ExpiredIdTokenError as e:
-            return jsonify({'message': 'Token has expired'}), 401
-        except InvalidIdTokenError as e:
-            return jsonify({'message': 'Invalid token'}), 401
-        # check_revoked=Trueにより、このエラーが発生する可能性が追加される
-        except RevokedIdTokenError as e:
-            return jsonify({'message': 'Token has been revoked'}), 401
+            
+        except ExpiredIdTokenError:
+            return error_response(
+                code='EXPIRED_ID_TOKEN',
+                message='Token has expired',
+                status=401
+            )
+        except InvalidIdTokenError:
+            return error_response(
+                code='INVALID_ID_TOKEN',
+                message='Invalid token',
+                status=401
+            )
+        except RevokedIdTokenError:
+            return error_response(
+                code='REVOKED_ID_TOKEN',
+                message='Token has been revoked',
+                status=401
+            )
         except Exception as e:
-            return jsonify({'message': f'An unexpected error occurred: {e}'}), 500
+            # 予期せぬエラーは500エラーとして返す
+            return error_response(
+                code='INTERNAL_SERVER_ERROR',
+                message='An unexpected error occurred',
+                status=500,
+                details=str(e) # エラーの詳細をdetailsに含める
+            )
 
         g.decoded_token = decoded_token
         return f(*args, **kwargs)

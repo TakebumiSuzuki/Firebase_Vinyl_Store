@@ -58,7 +58,7 @@ def mock_firebase_auth(mocker):
     mock_verify = mocker.patch('backend.decorators.verify_id_token')
 
     # delete_userのモックは、views.pyから見たパスに合わせる
-    mock_delete = mocker.patch('backend.blueprints.auth.views.delete_user')
+    mock_delete = mocker.patch('backend.blueprints.auth.views.delete_fb_user')
 
     return {
         'verify_id_token': mock_verify,

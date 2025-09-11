@@ -7,9 +7,11 @@ import LoaderIcon from '@/assets/icons/Loader.svg'
 import axios from 'axios'
 import { useAuthStore } from '@/stores/authStore'
 import { getErrorMessage } from '@/utils'
+import { useRouter } from 'vue-router'
 
 const { showNotification } = useNotificationStore()
 const authStore = useAuthStore()
+const router = useRouter()
 
 const formDict = reactive({
   email: '',
@@ -52,9 +54,11 @@ const handleSubmit = async()=>{
 
     showNotification('You have logged in successfully!', 'success')
     console.log('Signed In Successfully :', userCredential.user);
+    router.push({name:'home'})
 
   } catch(error) {
     const message = getErrorMessage(error);
+    console.log(error)
     console.error(message);
     await auth.signOut()
 
