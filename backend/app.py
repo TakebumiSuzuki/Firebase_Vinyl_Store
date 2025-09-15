@@ -1,20 +1,21 @@
 from flask import Flask
 from backend.extensions import db, migrate
 import os
-from backend.config import configs_dic
+from backend.config import configs_dic, LOGGING_CONFIG
 import firebase_admin
 from firebase_admin import credentials
 from backend.blueprints.auth.views import auth_bp
 from backend.blueprints.admin_user.views import admin_user_bp
 from backend.blueprints.me.views import me_bp
-import logging
+from logging.config import dictConfig
+from backend.errors import setup_errorhandlers
 
 def create_app():
-    app = Flask(__name__)
+    # dictConfigを先に適用
+    dictConfig(LOGGING_CONFIG)
 
-    # INFOレベル以上のログをコンソールに出力する設定
-    logging.basicConfig(level=logging.INFO)
-    app.logger.setLevel(logging.INFO)
+    # appのインスタンス化時に app.name（つまり__name__）と同名の logger も作られる。この時 LOGGING_CONFIG 設定が適用される。
+    app = Flask(__name__)
 
     app_env = os.getenv('APP_ENV', 'development')
     config_class = configs_dic.get(app_env) # 見つからない場合には None が返る
@@ -50,6 +51,7 @@ def create_app():
 
     db.init_app(app)
     migrate.init_app(app, db)
+    setup_errorhandlers()
 
     @app.get('/')
     def home():

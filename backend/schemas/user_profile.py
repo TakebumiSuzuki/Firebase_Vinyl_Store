@@ -17,6 +17,8 @@ class UpdateUserProfile(BaseModel):
     birthday: date|None
     favorite_color: FavoriteColor|None
 
+class ChangeEmailSchema(BaseModel):
+    email: EmailStr
 
 class ReadUserProfile(BaseModel):
     uid: str = Field(max_length=128, min_length=1)

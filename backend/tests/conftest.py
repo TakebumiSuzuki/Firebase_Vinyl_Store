@@ -29,10 +29,10 @@ def db(app):
     [部品③] テスト用のデータベースセッションを提供します。
     テスト開始時に一度だけDBテーブルを全て作成し、終了時に全て削除します。
     """
-    with app.app_context():
-        _db.create_all()
-        yield _db
-        _db.drop_all()
+    # with app.app_context():
+    _db.create_all()
+    yield _db
+    _db.drop_all()
 
 @pytest.fixture(autouse=True)
 def db_session(db):

@@ -38,6 +38,7 @@ services:
   db:
     # alpine で全く問題ありません。わざわざ bullseye を使う必要はほとんどありません
     image: postgres:17.5-alpine3.20
+    init: true
     volumes:
       - postgres_data:/var/lib/postgresql/data/
 
