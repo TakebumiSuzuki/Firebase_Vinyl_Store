@@ -2,10 +2,16 @@ import { createRouter, createWebHistory } from 'vue-router'
 
 import AuthLayout from '@/layouts/AuthLayout.vue'
 import AdminLayout from '@/layouts/AdminLayout.vue'
+import AccountLayout from '@/layouts/AccountLayout.vue'
+
 import LoginView from '@/views/Auth/LoginView.vue'
 import RegisterView from '@/views/Auth/RegisterView.vue'
 import AdminUsersView from '@/views/Admin/AdminUsersView.vue'
 import HomeView from '@/views/HomeView.vue'
+import ChangeEmailView from '@/views/Account/ChangeEmailView.vue'
+import ChangePasswordView from '@/views/Account/ChangePasswordView.vue'
+import ChangeProfileView from '@/views/Account/ChangeProfileView.vue'
+import UserInfoView from '@/views/Account/UserInfoView.vue'
 
 
 // index.jsというファイル名について、Vite や Webpack などのフロントエンドの開発ツールでは、慣例的に、
@@ -39,6 +45,34 @@ const routes = [
       },
 
     ]
+  },
+  {
+    path: '/account',
+    name: 'account',
+    component: AccountLayout,
+    children:[
+      {
+        path: 'change-email',
+        name: 'change-email',
+        component: ChangeEmailView
+      },
+      {
+        path: 'change-password',
+        name: 'change-password',
+        component: ChangePasswordView
+      },
+      {
+        path: 'change-profile',
+        name: 'change-profile',
+        component: ChangeProfileView
+      },
+      {
+        path: 'user-info',
+        name: 'user-info',
+        component: UserInfoView
+      },
+    ]
+
   },
   {
     path: '/admin',

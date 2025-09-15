@@ -43,25 +43,25 @@ def setup_errorhandlers(app):
         )
 
     # 2. ユーザーアカウントが無効化されている場合 (403 Forbidden)
-    @app.errorhandler(auth.DisabledAccountError)
-    def handle_disabled_account(error):
-        app.logger.warning(f"Attempt to access with a disabled account: {error}")
-        return error_response(
-            code='auth/user-disabled',
-            message='The user account has been disabled by an administrator.',
-            status=403 # 認証はされたがアクセスが禁止されているので403が適切
-        )
+    # @app.errorhandler(auth.DisabledAccountError)
+    # def handle_disabled_account(error):
+    #     app.logger.warning(f"Attempt to access with a disabled account: {error}")
+    #     return error_response(
+    #         code='auth/user-disabled',
+    #         message='The user account has been disabled by an administrator.',
+    #         status=403 # 認証はされたがアクセスが禁止されているので403が適切
+    #     )
 
     # 3. 引数が不正な場合 (400 Bad Request)
-    @app.errorhandler(auth.InvalidArgumentError)
-    def handle_invalid_argument(error):
-        # 例: メールアドレスの形式が不正、パスワードが弱すぎるなど
-        app.logger.warning(f"Invalid argument provided to Firebase Auth: {error}")
-        return error_response(
-            code='bad_request/invalid-argument',
-            message=f'An invalid argument was provided. {error}', # Firebaseからのエラーメッセージをそのまま含めると分かりやすい
-            status=400 # クライアントからのリクエストが不正なので400が適切
-        )
+    # @app.errorhandler(auth.InvalidArgumentError)
+    # def handle_invalid_argument(error):
+    #     # 例: メールアドレスの形式が不正、パスワードが弱すぎるなど
+    #     app.logger.warning(f"Invalid argument provided to Firebase Auth: {error}")
+    #     return error_response(
+    #         code='bad_request/invalid-argument',
+    #         message=f'An invalid argument was provided. {error}', # Firebaseからのエラーメッセージをそのまま含めると分かりやすい
+    #         status=400 # クライアントからのリクエストが不正なので400が適切
+    #     )
 
     @app.errorhandler(auth.UserNotFoundError)
     def handle_user_not_found(error):

@@ -27,7 +27,7 @@ def payload_required(f):
 
         # Content-Type が application/json でない場合や、JSONの構文が間違っている場合
         except BadRequest as error:
-            current_app.error(f'Request body must be valid JSON with Content-Type: application/json: {error}')
+            current_app.logger.error(f'Request body must be valid JSON with Content-Type: application/json: {error}')
             return error_response(
                 code='INVALID_PAYLOAD',
                 message='Request body must be valid JSON with Content-Type: application/json',
@@ -36,7 +36,7 @@ def payload_required(f):
 
         # リクエストボディが完全に空の場合、または、中身が空のJSONオブジェクト {} や空の配列 [] の場合
         if not payload:
-            current_app.error(f'Payload is empty.')
+            current_app.logger.error(f'Payload is empty.')
             return error_response(
                 code='EMPTY_PAYLOAD',
                 message='Payload cannot be empty',
@@ -66,7 +66,7 @@ def login_required(f):
     def wrapper(*args, **kwargs):
         auth_header = request.headers.get('Authorization')
         if not auth_header:
-            current_app.error(f'Authorization header is missing.')
+            current_app.logger.error(f'Authorization header is missing.')
             return error_response(
                 code='AUTH_HEADER_MISSING',
                 message='Authorization header is missing',
@@ -74,7 +74,7 @@ def login_required(f):
             )
         header_parts = auth_header.split()
         if len(header_parts) != 2 or not header_parts[0].lower() == 'bearer':
-            current_app.error(f'Invalid Authorization header format.')
+            current_app.logger.error(f'Invalid Authorization header format.')
             return error_response(
                 code='INVALID_AUTH_HEADER_FORMAT',
                 message='Invalid Authorization header format',
@@ -90,28 +90,28 @@ def login_required(f):
             decoded_token = verify_id_token(id_token, check_revoked=True)
 
         except ExpiredIdTokenError:
-            current_app.warning(f'Token has expired')
+            current_app.logger.warning(f'Token has expired')
             return error_response(
                 code='EXPIRED_ID_TOKEN',
                 message='Token has expired',
                 status=401
             )
         except InvalidIdTokenError:
-            current_app.warning(f'Invalid token')
+            current_app.logger.warning(f'Invalid token')
             return error_response(
                 code='INVALID_ID_TOKEN',
                 message='Invalid token',
                 status=401
             )
         except RevokedIdTokenError:
-            current_app.warning(f'Token has been revoked')
+            current_app.logger.warning(f'Token has been revoked')
             return error_response(
                 code='REVOKED_ID_TOKEN',
                 message='Token has been revoked',
                 status=401
             )
         except Exception as error:
-            current_app.exception(f'An unexpected error occurred: {error}')
+            current_app.logger.exception(f'An unexpected error occurred: {error}')
             # 予期せぬエラーは500エラーとして返す
             return error_response(
                 code='INTERNAL_SERVER_ERROR',
