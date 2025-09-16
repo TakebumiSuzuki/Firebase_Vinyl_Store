@@ -1,4 +1,5 @@
 import { createRouter, createWebHistory } from 'vue-router'
+import { useAuthStore } from '@/stores/authStore'
 
 import AuthLayout from '@/layouts/AuthLayout.vue'
 import AdminLayout from '@/layouts/AdminLayout.vue'
@@ -12,6 +13,17 @@ import ChangeEmailView from '@/views/Account/ChangeEmailView.vue'
 import ChangePasswordView from '@/views/Account/ChangePasswordView.vue'
 import ChangeProfileView from '@/views/Account/ChangeProfileView.vue'
 import UserInfoView from '@/views/Account/UserInfoView.vue'
+import NotFoundView from '@/views/NotFoundView.vue'
+
+
+
+function redirect_to_home(){
+  const authStore = useAuthStore()
+  if (authStore.isLoggedIn){
+    return {name:'home'}
+  }
+  return true
+}
 
 
 // index.jsというファイル名について、Vite や Webpack などのフロントエンドの開発ツールでは、慣例的に、
@@ -20,6 +32,11 @@ import UserInfoView from '@/views/Account/UserInfoView.vue'
 // まとめてexportする「窓口」として index.js が使われる
 
 const routes = [
+  {
+    path: '/',
+    name: 'root',
+    redirect: '/home'  // または適切なデフォルトページへリダイレクト
+  },
   {
     path:'/home',
     name: 'home',
@@ -35,13 +52,15 @@ const routes = [
       {
         path: 'register',
         name: 'register',
-        component: RegisterView
+        component: RegisterView,
+        beforeEnter: redirect_to_home
       },
 
       {
         path: 'login',
         name: 'login',
-        component: LoginView
+        component: LoginView,
+        beforeEnter: redirect_to_home
       },
 
     ]
@@ -54,22 +73,26 @@ const routes = [
       {
         path: 'change-email',
         name: 'change-email',
-        component: ChangeEmailView
+        component: ChangeEmailView,
+        meta: { requiresLogin: true }
       },
       {
         path: 'change-password',
         name: 'change-password',
-        component: ChangePasswordView
+        component: ChangePasswordView,
+        meta: { requiresLogin: true }
       },
       {
         path: 'change-profile',
         name: 'change-profile',
-        component: ChangeProfileView
+        component: ChangeProfileView,
+        meta: { requiresLogin: true }
       },
       {
         path: 'user-info',
         name: 'user-info',
-        component: UserInfoView
+        component: UserInfoView,
+        meta: { requiresLogin: true }
       },
     ]
 
@@ -85,7 +108,12 @@ const routes = [
         component: AdminUsersView,
       },
     ]
-  }
+  },
+  {
+    path: '/:pathMatch(.*)*',
+    name: 'NotFound',
+    component: NotFoundView
+  },
 
 ]
 
@@ -95,5 +123,19 @@ const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes
 })
+
+router.beforeEach((to)=>{
+  if (to.meta.requiresLogin){
+    const authStore = useAuthStore()
+    // JSでは、オブジェクトに存在しないキーへアクセスしようとすると、エラーにはならず、 undefined が返される。
+    if (!authStore.isLoggedIn){
+      return {name:'login'}
+    }
+  }
+  return true
+
+
+})
+
 
 export default router

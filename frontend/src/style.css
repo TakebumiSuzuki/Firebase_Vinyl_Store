@@ -1,5 +1,9 @@
 @import "tailwindcss";
 
+html, body {
+  overscroll-behavior: none; /* バウンス・オーバースクロールを無効化 */
+}
+
 
 .input-layout{
   @apply w-full ring ring-neutral-400 rounded-lg px-4 py-2 outline-none
