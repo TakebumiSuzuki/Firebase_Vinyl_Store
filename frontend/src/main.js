@@ -19,9 +19,9 @@ const authStore = useAuthStore()
 
 let appMounted = false
 
-onAuthStateChanged(auth, (user)=>{
-  console.log(`onAuthStateChange is called. user: ${user}`)
-  authStore.setUser(user)
+onAuthStateChanged(auth, async (user)=>{
+  console.log(`onAuthStateChange is called. `)
+  await authStore.setUser(user)
 
   if (!appMounted){
     app.use(router)

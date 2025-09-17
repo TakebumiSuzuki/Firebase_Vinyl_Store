@@ -21,8 +21,8 @@
 
   <div>
     <div v-if="users">
-      <div v-for="user in users" :key="user.id">
-        <RouterLink :to="{name: ''}">{{ user.email }}</RouterLink>
+      <div v-for="user_profile in users" :key="user_profile.uid">
+        <RouterLink :to="{name: 'admin-user-detail', params:{uid: user_profile.uid}}">{{ user_profile.email }}</RouterLink>
       </div>
     </div>
     <div v-else>

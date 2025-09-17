@@ -15,6 +15,8 @@ import ChangePasswordView from '@/views/Account/ChangePasswordView.vue'
 import ChangeProfileView from '@/views/Account/ChangeProfileView.vue'
 import UserInfoView from '@/views/Account/UserInfoView.vue'
 import NotFoundView from '@/views/NotFoundView.vue'
+import AccessDeniedView from '@/views/AccessDeniedView.vue'
+
 
 
 
@@ -75,25 +77,25 @@ const routes = [
         path: 'change-email',
         name: 'change-email',
         component: ChangeEmailView,
-        meta: { requiresLogin: true }
+        meta: { loginRequired: true }
       },
       {
         path: 'change-password',
         name: 'change-password',
         component: ChangePasswordView,
-        meta: { requiresLogin: true }
+        meta: { loginRequired: true }
       },
       {
         path: 'change-profile',
         name: 'change-profile',
         component: ChangeProfileView,
-        meta: { requiresLogin: true }
+        meta: { loginRequired: true }
       },
       {
         path: 'user-info',
         name: 'user-info',
         component: UserInfoView,
-        meta: { requiresLogin: true }
+        meta: { loginRequired: true }
       },
     ]
 
@@ -107,13 +109,21 @@ const routes = [
         path: 'users-list',
         name: 'admin-users-list',
         component: AdminUsersListView,
+        meta: { loginRequired: true, adminRequired: true }
       },
       {
-        path: 'user-detail',
+        path: 'user-detail/:uid',
         name: 'admin-user-detail',
         component: AdminUserDetailView,
+        props: true,
+        meta: { loginRequired: true, adminRequired: true }
       },
     ]
+  },
+  {
+    path: '/access-denied',
+    name: 'access-denied',
+    component: AccessDeniedView,
   },
   {
     path: '/:pathMatch(.*)*',
@@ -131,11 +141,16 @@ const router = createRouter({
 })
 
 router.beforeEach((to)=>{
-  if (to.meta.requiresLogin){
+  if (to.meta.loginRequired){
     const authStore = useAuthStore()
     // JSでは、オブジェクトに存在しないキーへアクセスしようとすると、エラーにはならず、 undefined が返される。
     if (!authStore.isLoggedIn){
       return {name:'login'}
+    }
+    if (to.meta.adminRequired){
+      if (!authStore.isAdmin){
+        return {name: 'access-denied'}
+      }
     }
   }
   return true

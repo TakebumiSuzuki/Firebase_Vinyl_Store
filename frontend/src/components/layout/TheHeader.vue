@@ -54,7 +54,13 @@ onBeforeUnmount(() => {
   <header class="px-6 sm:px-12 shadow-sm bg-neutral-white dark:bg-neutral-800">
     <div class="py-4">
       <div class="flex justify-between items-center max-w-[1200px] mx-auto">
-        <div class="text-3xl sm:text-4xl">LOGO HERE</div>
+        <RouterLink
+          :to="{name:'home'}"
+          class="text-3xl sm:text-4xl tracking-widest hover:scale-102 transiteion duration-200 ease-in-out"
+        >
+          VINYL STORE
+        </RouterLink>
+
         <nav class="flex items-center gap-4">
           <div v-if="!authStore.isLoggedIn" class="flex items-center justify-center gap-4">
             <RouterLink  :to="{name:'login'}">Login</RouterLink>
@@ -64,7 +70,7 @@ onBeforeUnmount(() => {
             <div class="relative inline-block" ref="menuContainer">
               <!-- 2. アイコンをクリック可能なbutton要素に変更 -->
               <button @click="toggleMenu" type="button" aria-label="Open the setting menue">
-                <SettingIcon class="size-5" />
+                <SettingIcon class="size-6" />
               </button>
 
               <!-- 3. v-ifでメニューの表示・非表示を制御 -->

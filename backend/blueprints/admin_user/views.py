@@ -19,7 +19,56 @@ def admin_get_users():
     user_profile_records = db.session.execute(stmt).scalars().all()
     user_profiles = [ReadUserProfile.model_validate(user_profile).model_dump() for user_profile in user_profile_records]
 
-    return jsonify({'user_profiles':user_profiles})
+    return jsonify({'user_profiles':user_profiles}), 200
+
+
+@admin_user_bp.delete('')
+@payload_required
+@login_required
+def admin_delete_user():
+    uid = g.payload['uid']
+    auth.delete_user(uid)
+    try:
+        user_profile = db.session.get(UserProfile, uid)
+        if not user_profile:
+            return '', 204
+        db.session.delete(user_profile)
+        db.session.commit()
+    except SQLAlchemyError as e:
+        db.session.rollback()
+        current_app.logger.exception(f'Database discrepancy has occured. Failed to delete user_profile of uid: {uid}')
+        # この場合には、ユーザーには user_profile の消去失敗は伝える必要はないので、204でリターンをする。
+    return '', 204
+
+
+@admin_user_bp.get('/<string:uid>')
+@login_required
+def admin_get_user_detail(uid):
+
+    user_profile_record = db.session.get(UserProfile, uid)
+    if not user_profile_record:
+        return error_response('USER_NOT_FOUND', "Coun't find the user of uid: {uid}", 500)
+    unified_user_info = ReadUserProfile.model_validate(user_profile_record).model_dump()
+
+    try:
+        fb_user_record = auth.get_user(uid)
+    # 通常は @app.errorhandler で補足させるが、ここに限ってはDBのデーター不整合なので、ここで補足して500番エラーで返す
+    except auth.UserNotFoundError:
+        current_app.logger.error(f"Data inconsistency detected: User profile exists for uid '{uid}' but user not found in Firebase.")
+        return error_response('DATA_INCONSISTENCY', 'User profile exists but the corresponding Firebase user was not found.', 500)
+
+    creation_time = datetime.fromtimestamp(fb_user_record.user_metadata.creation_timestamp / 1000)
+    unified_user_info['creation_time'] = creation_time.isoformat()
+
+    if fb_user_record.user_metadata.last_sign_in_timestamp:
+        last_sign_in_time = datetime.fromtimestamp(fb_user_record.user_metadata.last_sign_in_timestamp / 1000)
+        unified_user_info['last_sign_in_time'] = last_sign_in_time.isoformat()
+    else:
+        unified_user_info['last_sign_in_time'] = None
+
+
+    return jsonify({'unified_user_info':unified_user_info}), 200
+
 
 
 

