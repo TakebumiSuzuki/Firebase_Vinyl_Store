@@ -5,6 +5,7 @@ from firebase_admin.auth import verify_id_token, ExpiredIdTokenError, InvalidIdT
 from backend.errors import error_response
 from backend.extensions import db
 from backend.models.user_profile import UserProfile
+from backend.schemas.user_profile import ReadUserProfile
 
 def payload_required(f):
     """Requires a non-empty JSON payload in the request.
@@ -53,7 +54,7 @@ def payload_required(f):
 def login_required(f):
     """Decorator requiring a valid Firebase "Bearer" ID token.
 
-        Stores decoded token in `g.decoded_token` adn uid in 'g.uid' on success, or returns 401.
+        Stores decoded token in `g.decoded_token` and uid in 'g.uid' on success, or returns 401.
 
         Args:
             f: The view function to protect.
@@ -116,8 +117,7 @@ def login_required(f):
             return error_response(
                 code='INTERNAL_SERVER_ERROR',
                 message='An unexpected error occurred',
-                status=500,
-                details=str(error) # エラーの詳細をdetailsに含める
+                status=500
             )
 
         g.decoded_token = decoded_token
@@ -144,21 +144,55 @@ def user_profile_required(f):
     @functools.wraps(f)
     def wrapper(*args, **kwargs):
         if not hasattr(g, 'uid'):
-            current_app.logger.exception("The g proxy object for this app context doesn't have uid key.")
+            current_app.logger.exception("The g proxy object doesn't have uid key.")
             return error_response(
                 code='USER_PROFILE_NOT_FOUND',
                 message="Couldn't find user_profile for this user.",
                 status=500
             )
-        user_profile = db.session.get(UserProfile, g.uid)
-        if not user_profile:
+        user_profile_record = db.session.get(UserProfile, g.uid)
+        if not user_profile_record:
             current_app.logger.exception(f"Couldn't find user_profile for this uid: {g.uid}")
             return error_response(
                 code='USER_PROFILE_NOT_FOUND',
                 message="Couldn't find user_profile for this user.",
-                status=404
+                status=500
             )
-        g.user_profile_record = user_profile
+        g.user_profile_record = user_profile_record
+
+        return f(*args, **kwargs)
+
+    return wrapper
+
+
+def admin_required(f):
+    @functools.wraps(f)
+    def wrapper(*args, **kwargs):
+        if not hasattr(g, 'uid'):
+            current_app.logger.exception("The g proxy object doesn't have uid.")
+            return error_response(
+                code='USER_PROFILE_NOT_FOUND',
+                message="Couldn't find user_profile for this user.",
+                status=500
+            )
+        if not hasattr(g, 'user_profile_record'):
+            current_app.logger.exception("The g proxy object doesn't have user_profile_record.")
+            return error_response(
+                code='USER_PROFILE_NOT_FOUND',
+                message="Couldn't find user_profile for this user.",
+                status=500
+            )
+
+        uid = g.uid
+        user_profile_record = g.user_profile_record
+
+        if not user_profile_record.is_admin:
+            current_app.logger.warning(f'The user of uid: "{uid}" has tried to access this endpoint without admin role.')
+            return error_response(
+                'ADMIN_ROLE_REQUIRED',
+                'The user needs to have an admin role to get this info',
+                403
+            )
 
         return f(*args, **kwargs)
 

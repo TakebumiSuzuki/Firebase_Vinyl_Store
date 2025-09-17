@@ -1,7 +1,10 @@
 <!--
-  通常の <script> ブロック
-  ここに書かれた変数は、コンポーネントの外部（モジュールスコープ）で定義されます。
+  通常の<script>ブロックに書かれたコードは、モジュールスコープで実行されます。
+  これは、Vueコンポーネントの定義が処理されるよりも前に、JavaScriptモジュールとして一度だけ評価されます。
+  colorVariantsは、コンポーネントが何度再利用されても内容が変わることのない、静的な定数です。
+  リアクティブにする必要もありません。
 -->
+
 <script>
   const colorVariants = {
     emerald: {
@@ -40,10 +43,6 @@
   };
 </script>
 
-<!--
-  <script setup> ブロック
-  コンポーネントのリアクティブなロジックを記述します。
--->
 <script setup>
   import { computed } from 'vue'
 
@@ -51,7 +50,8 @@
     baseColor: {
       type: String,
       required: true,
-      // この validator は、上の<script>で定義された colorVariants を参照できるため、エラーになりません。
+      // 通常の<script>ブロックにcolorVariantsを置くことで、definePropsが処理されるよりも前に
+      // colorVariantsがモジュールスコープに確実に存在することになり、validatorから安全に参照できる
       validator: (value) => Object.keys(colorVariants).includes(value),
     },
     buttonTitle: {
@@ -60,7 +60,8 @@
     },
   })
 
-  // props.baseColor に応じて、対応する色のクラスセットを取得
+  // <script setup> 内でプロパティの値を使いたいときは、props.プロパティ名 と書く必要があります。
+  // <template> 内でプロパティの値を表示したり使ったりするときは、props.を省いて良い
   const selectedColorSet = computed(() => colorVariants[props.baseColor])
 
   // 各パーツに適用する動的なクラス

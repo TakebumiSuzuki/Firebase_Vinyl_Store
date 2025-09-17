@@ -7,7 +7,8 @@ import AccountLayout from '@/layouts/AccountLayout.vue'
 
 import LoginView from '@/views/Auth/LoginView.vue'
 import RegisterView from '@/views/Auth/RegisterView.vue'
-import AdminUsersView from '@/views/Admin/AdminUsersView.vue'
+import AdminUsersListView from '@/views/Admin/AdminUsersListView.vue'
+import AdminUserDetailView from '@/views/Admin/AdminUserDetailView.vue'
 import HomeView from '@/views/HomeView.vue'
 import ChangeEmailView from '@/views/Account/ChangeEmailView.vue'
 import ChangePasswordView from '@/views/Account/ChangePasswordView.vue'
@@ -103,9 +104,14 @@ const routes = [
     component: AdminLayout,
     children: [
       {
-        path: 'users',
-        name: 'admin-users',
-        component: AdminUsersView,
+        path: 'users-list',
+        name: 'admin-users-list',
+        component: AdminUsersListView,
+      },
+      {
+        path: 'user-detail',
+        name: 'admin-user-detail',
+        component: AdminUserDetailView,
       },
     ]
   },
