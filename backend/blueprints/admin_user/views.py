@@ -2,7 +2,7 @@ from flask import Blueprint, request, jsonify, g, current_app
 from firebase_admin import auth
 from backend.models.user_profile import UserProfile
 from backend.extensions import db
-from backend.decorators import payload_required, login_required
+from backend.decorators import payload_required, login_required, admin_required
 from sqlalchemy import select
 from sqlalchemy.exc import SQLAlchemyError
 from backend.errors import error_response
@@ -12,8 +12,10 @@ from pprint import pprint
 
 admin_user_bp = Blueprint('admin-user', __name__, url_prefix='/api/v1/admin-user')
 
+
 @admin_user_bp.get('')
 @login_required
+@admin_required
 def admin_get_users():
     stmt = select(UserProfile)
     user_profile_records = db.session.execute(stmt).scalars().all()
@@ -25,7 +27,9 @@ def admin_get_users():
 @admin_user_bp.delete('')
 @payload_required
 @login_required
+@admin_required
 def admin_delete_user():
+    # アドミン自身ではなく、対象ユーザーのuidを取得している
     uid = g.payload['uid']
     auth.delete_user(uid)
     try:
@@ -34,7 +38,8 @@ def admin_delete_user():
             return '', 204
         db.session.delete(user_profile)
         db.session.commit()
-    except SQLAlchemyError as e:
+
+    except Exception:
         db.session.rollback()
         current_app.logger.exception(f'Database discrepancy has occured. Failed to delete user_profile of uid: {uid}')
         # この場合には、ユーザーには user_profile の消去失敗は伝える必要はないので、204でリターンをする。
@@ -43,6 +48,7 @@ def admin_delete_user():
 
 @admin_user_bp.get('/<string:uid>')
 @login_required
+@admin_required
 def admin_get_user_detail(uid):
 
     user_profile_record = db.session.get(UserProfile, uid)

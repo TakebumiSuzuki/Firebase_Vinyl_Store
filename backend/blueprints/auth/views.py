@@ -1,19 +1,22 @@
-from flask import Blueprint, request, jsonify, g, current_app
-from firebase_admin import auth
-from backend.models.user_profile import UserProfile
+from flask import Blueprint, jsonify, g, current_app
 from backend.extensions import db
+from firebase_admin import auth
+
 from backend.decorators import payload_required, login_required
+from backend.models.user_profile import UserProfile
+from backend.schemas.user_profile import PublicReadUserProfile
+
 from sqlalchemy.exc import SQLAlchemyError
 from backend.errors import error_response
-from backend.schemas.user_profile import PublicReadUserProfile
 
 auth_bp = Blueprint('auth', __name__, url_prefix='/api/v1/auth')
 
+
 def delete_fb_user(uid):
-  try:
-    auth.delete_user(uid)
-  except Exception as e:
-    current_app.logger.critical(f'Data descrepancy occured. Failed to delete FB user. uid: {uid}')
+    try:
+        auth.delete_user(uid)
+    except Exception:
+        current_app.logger.exception(f'Data descrepancy occured. Failed to delete Firebase user. uid: {uid}')
 
 
 @auth_bp.post('/add-user-profile')
@@ -22,7 +25,7 @@ def delete_fb_user(uid):
 def add_user_profile():
     payload = g.payload
     decoded_token = g.decoded_token
-    uid = decoded_token['uid']
+    uid = g.uid
 
     email = decoded_token.get('email')
     if not email:
@@ -38,21 +41,70 @@ def add_user_profile():
     else:
         is_admin = False
     new_user = UserProfile(email=email, user_name=user_name, is_admin=is_admin, uid=uid)
+
+    try:
+        db.session.add(new_user)
+        db.session.commit()
+        data = PublicReadUserProfile.model_validate(new_user).model_dump()
+        return jsonify({'user_profile': data }), 201
+
+    except Exception as e:
+        try:
+            db.session.rollback()
+            delete_fb_user(uid)
+            return error_response(code='INTERNAL_SERVER_ERROR', message='Failed to save User. Please try again later.', status=500)
+        except Exception as e:
+            current_app.logger.exception(f'Database data discrepancy has occured.Faild to delete Firebase user account. uid: {uid}')
+            return error_response(code='INTERNAL_SERVER_ERROR', message='Failed to save User. Please try again later.', status=500)
+
+
+@auth_bp.post('/social-login')
+@login_required
+def social_login():
+    uid = g.uid
+    decoded_token = g.decoded_token
+
+    user_profile = db.session.get(UserProfile, uid)
+    if user_profile:
+        return '', 200
+
+    # Facebook, Twitterなどの場合には email が decoded_token に含まれない可能性があるが、
+    # 今回のアプリでは、Google認証のみなので、nullはエラーとする。
+    email = decoded_token.get('email')
+    if not email:
+        try:
+            delete_fb_user(uid)
+            return error_response(code='BAD_REQUEST', message='Email from Google Login is empty', status=400)
+        except Exception:
+            current_app.logger.exception(f'Database data discrepancy has occured.Faild to delete Firebase user account. uid: {uid}')
+            return error_response(code='INTERNAL_SERVER_ERROR', message='Failed to create UserProfile. Please try again later.', status=500)
+
+    # ソーシャルログインからの decoded_token には name 欄に、そのSNSで登録したユーザー名が入ってくる。
+    # googleからの認証では必ず name情報が含まれるはずだが、ここでは、user_nameは None でも良いことにする
+    user_name = decoded_token.get('name')
+
+    is_admin = False
+    new_user = UserProfile(email=email, user_name=user_name, is_admin=is_admin, uid=uid)
     try:
         db.session.add(new_user)
         db.session.commit()
         data = PublicReadUserProfile.model_validate(new_user).model_dump()
         current_app.logger.info(data)
         return jsonify({'user_profile': data }), 201
-    except SQLAlchemyError as e:
+
+    except Exception as e:
         try:
             db.session.rollback()
             delete_fb_user(uid)
-            current_app.logger.error('Failed to save Userprofile. Delet FB user info to correnpond.')
-            return error_response(code='INTERNAL_SERVER_ERROR', message='Failed to save User. Please try again later.', status=500)
-        except Exception as e:
-            current_app.logger.critical(f'Database data discrepancy has occured.Faild to delete Firebase user account. uid: {uid}')
-            return error_response(code='INTERNAL_SERVER_ERROR', message='Failed to save User. Please try again later.', status=500)
+            current_app.logger.error(f'Failed to create UserProfile for this uid: {uid}. Firebase user has been deleted to correspond. {e}')
+            return error_response(code='INTERNAL_SERVER_ERROR', message='Failed to create UserProfile. Please try again later.', status=500)
+        except Exception:
+            return error_response(code='INTERNAL_SERVER_ERROR', message='Failed to create UserProfile. Please try again later.', status=500)
+
+
+
+
+
 
 
 """

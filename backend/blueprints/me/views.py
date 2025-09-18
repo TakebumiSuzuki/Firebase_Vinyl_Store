@@ -1,10 +1,9 @@
 from flask import Blueprint, g, jsonify, current_app
+from backend.extensions import db
 from firebase_admin import auth
 from backend.decorators import login_required, payload_required, user_profile_required
-from backend.models.user_profile import UserProfile
-from backend.extensions import db
-from backend.errors import error_response
 from backend.schemas.user_profile import PublicReadUserProfile, UpdateUserProfile, ChangeEmailSchema
+from backend.errors import error_response
 
 me_bp = Blueprint('me', __name__, url_prefix='/api/v1/me')
 
@@ -13,39 +12,41 @@ me_bp = Blueprint('me', __name__, url_prefix='/api/v1/me')
 @user_profile_required
 def get_me():
     user_profile_record = g.user_profile_record
-    user_profile_dic = PublicReadUserProfile.model_validate(user_profile_record).model_dump()
-    return jsonify({ 'user_profile': user_profile_dic }), 200
+    user_profile = PublicReadUserProfile.model_validate(user_profile_record).model_dump()
+    return jsonify({ 'user_profile': user_profile }), 200
 
 
-# FB Authで、メールアドレスを変更しただけでは、リフレッシュトークンは自動的に失効しない。
+# Firebase Authでは、メールアドレスを変更しただけでは、リフレッシュトークンは自動的に失効しない。
 # つまり、auth.revoke_refresh_tokens(uid)は呼ばれない.
 @me_bp.put('/email')
 @payload_required
 @login_required
 @user_profile_required
 def change_me_email():
-    dto = ChangeEmailSchema.model_validate(g.payload)
-    new_email = dto.email
-
+    payload = g.payload
     uid = g.uid
+    user_profile_record = g.user_profile_record
+
+    payload_dic = ChangeEmailSchema.model_validate(payload).model_dump()
+    new_email = payload_dic['email']
+
     auth.update_user(uid, email=new_email)
     try:
-        user_profile_record = g.user_profile_record
         user_profile_record.email = new_email
         db.session.commit()
-        user_profile_dic = PublicReadUserProfile.model_validate(user_profile_record).model_dump()
-        return jsonify({'user_profile': user_profile_dic}), 200
+        new_user_profile = PublicReadUserProfile.model_validate(user_profile_record).model_dump()
+        return jsonify({'user_profile': new_user_profile}), 200
 
-    except Exception as e:
-        current_app.logger.exception(f"Database discrepancy occured. Failed to update email in UserProfile, uid: {uid} - {e}")
+    except Exception:
+        current_app.logger.exception(f"Database discrepancy occured. Failed to update email in UserProfile, uid: {uid}. Set new email: '{new_email}' to this user's UserProfile.")
         raise
 
 
 # パスワードが変更された場合、Firebase Authenticationは自動的にそのユーザーの既存のリフレッシュトークンを
 # すべて失効させます。つまり、内部的に、auth.revoke_refresh_tokens(uid)が自動で実行される。これは、
 # Firebaseの内部のユーザー情報の tokensValidAfterTime というタイムスタンプに現在の時刻を記録する。
-# これにより、全ての端末が、最長で１時間後にはリフレッシュできなくなる。しかし、もし即座にアクセス不能にしたければ、
-#　login_required のデコレーター内で　verify_id_token(id_token, check_revoked=True)　とする。
+# これにより、全ての端末が、最長で１時間後にはリフレッシュできなくなる。さらに、もし即座にアクセス不能にしたければ、
+#　login_required のデコレーター内で　verify_id_token(id_token, check_revoked=True)　とすれば良い。
 @me_bp.put('/password')
 @login_required
 @payload_required
@@ -53,7 +54,7 @@ def change_me_password():
     uid = g.uid
     payload = g.payload
     if 'password' not in payload:
-        current_app.logger.warning('')
+        current_app.logger.warning('No password is included in the payload')
         return error_response('NO_PASSWORD_IN_PAYLOAD', 'Password should be in the payload', 400)
     new_password = payload['password']
     auth.update_user(uid, password=new_password)
@@ -66,9 +67,10 @@ def change_me_password():
 @user_profile_required
 def change_me_profile():
     payload = g.payload
+    user_profile_record = g.user_profile_record
+
     updates = UpdateUserProfile.model_validate(payload).model_dump(exclude_unset=True)
 
-    user_profile_record = g.user_profile_record
     for key, value in updates.items():
         setattr(user_profile_record, key, value)
     db.session.commit()
@@ -81,15 +83,16 @@ def change_me_profile():
 @user_profile_required
 def delete_me():
     uid = g.uid
+    user_profile_record = g.user_profile_record
+
     auth.delete_user(uid)
 
     try:
-        user_profile_record = g.user_profile_record
         db.session.delete(user_profile_record)
         db.session.commit()
         return '', 204
-    except Exception as e:
-        current_app.logger.exception(f'Database discrepancy has occured. Failed to delete user_profile for this user: {uid} - {e}')
+    except Exception:
+        current_app.logger.exception(f'Database discrepancy has occured. Failed to delete user_profile for this user: {uid}')
         # raise によって元のエラー (IntegrityErrorなど) をそのまま再スローする。
         raise
 
